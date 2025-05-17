@@ -224,7 +224,7 @@ class RLOrbitalApp:
     def _create_tab2_widgets(self):
         credits=[("Marlburrow for RL Marlbot:","Marlbot 1.6.1","https://github.com/MarlBurroW"),
                  ("My Github:","","https://github.com/flaryx32"),
-                 ("Orbital Gui:","","https://github.com/SkiffyMan"),
+                 ("Skiffy for Orbital Gui:","","https://github.com/SkiffyMan"),
                  ("Derrod for Legendary Launcher:","","https://github.com/derrod"),
                  ("Xen for NextMortal:","","https://github.com/xenmods")]
         for i,(desc,ver,url) in enumerate(credits):
