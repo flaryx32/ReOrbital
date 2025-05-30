@@ -175,10 +175,10 @@ class RLOrbitalApp:
             "XboxTypeS_DPad_Right","XboxTypeS_DPad_Left","XboxTypeS_RightThumbStick",
             "XboxTypeS_LeftThumbStick","XboxTypeS_LeftTrigger","XboxTypeS_RightTrigger",
             "XboxTypeS_LeftShoulder","XboxTypeS_RightShoulder"]
-        self.combo_toggle_keys=ctk.CTkComboBox(self.tab1,variable=self.selected_toggle_key_var,
-                                               values=toggle_keys,state="readonly")
+        self.combo_toggle_keys=ctk.CTkComboBox(self.tab1, variable=self.selected_toggle_key_var,
+                                               values=toggle_keys, state="readonly",
+                                               command=self.combo_toggle_keys_selected_changed)
         self.combo_toggle_keys.grid(row=1,column=1,padx=(5,0),pady=2,sticky="ew")
-        self.combo_toggle_keys.bind("<<ComboboxSelected>>",self.combo_toggle_keys_selected_changed)
 
         cb_frame=ctk.CTkFrame(self.tab1,fg_color="transparent")
         cb_frame.grid(row=2,column=0,columnspan=2,padx=0,pady=(10,5),sticky="ew")
@@ -328,7 +328,7 @@ class RLOrbitalApp:
             self.label_injected_status.configure(text_color="red")
         self.root.after(10000,self.timer_check_injected_tick)
 
-    def combo_toggle_keys_selected_changed(self,event=None):
+    def combo_toggle_keys_selected_changed(self, choice: str):
         new=self.selected_toggle_key_var.get()
         if self.get_toggle_key_from_config()!=new:
             self.set_toggle_key_in_config(new)
