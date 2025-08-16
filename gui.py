@@ -607,6 +607,18 @@ class RLOrbitalApp:
             return os.path.join(home,"Library","Application Support","legendary","user.json")
         return os.path.join(home,".config","legendary","user.json")
 
+    # ---------- NEW: helper to compare mtimes safely ----------
+    def _is_newer(self, src_path, dst_path):
+        try:
+            if not os.path.exists(src_path):
+                return False
+            if not os.path.exists(dst_path):
+                return True
+            return os.path.getmtime(src_path) > os.path.getmtime(dst_path)
+        except Exception:
+            return True
+    # ----------------------------------------------------------
+
     def button_add_account_click(self):
         self._run_legendary_cli(["auth","--delete"])
         messagebox.showinfo("Legendary","Legendary auth now")
@@ -659,6 +671,7 @@ class RLOrbitalApp:
         return path,name
 
     def button_launch_game_click(self):
+        # Token-safe: only push account -> sys when needed, then copy back sys -> account after launch
         path,name=self._get_account_path_from_selection()
         if not path:
             messagebox.showerror("Error","no account selected")
@@ -667,17 +680,43 @@ class RLOrbitalApp:
         if not sys_cfg:
             messagebox.showerror("Error","config path err")
             return
+
+        # Ensure cfg dir exists
         try:
             os.makedirs(os.path.dirname(sys_cfg),exist_ok=True)
-            shutil.copy2(path,sys_cfg)
         except Exception as e:
-            messagebox.showerror("File Error",f"copy fail: {e}")
+            messagebox.showerror("File Error",f"cfg dir fail: {e}")
             return
+
+        # ---- PUSH: only if account file is newer or sys_cfg missing ----
+        try:
+            if self._is_newer(path, sys_cfg):
+                shutil.copy2(path, sys_cfg)
+        except Exception as e:
+            messagebox.showerror("File Error",f"copy to system cfg fail: {e}")
+            return
+
         active=self._get_display_name_from_json(sys_cfg)
         if "Error" in active: active=name or "Account"
         messagebox.showinfo("Launching",f"Launching RL for {active}")
+
         out,ok=self._run_legendary_cli(["launch","Sugar","--skip-version-check"])
-        if out is None: return
+        if out is None: 
+            # Even if None, attempt to pull back creds if present
+            try:
+                if os.path.exists(sys_cfg) and self._is_newer(sys_cfg, path):
+                    shutil.copy2(sys_cfg, path)
+            except Exception as e:
+                messagebox.showwarning("Token persist warning",f"Couldn't update account file: {e}")
+            return
+
+        # ---- PULL BACK: keep rotated token in per-account file ----
+        try:
+            if os.path.exists(sys_cfg) and self._is_newer(sys_cfg, path):
+                shutil.copy2(sys_cfg, path)
+        except Exception as e:
+            messagebox.showwarning("Token persist warning",f"Couldn't update account file: {e}")
+
         if not ok:
             lo=out.lower()
             if "no saved credentials" in lo:
